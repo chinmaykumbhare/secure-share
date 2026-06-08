@@ -1,226 +1,223 @@
 import "./style.css";
 
 import init, {
-    encrypt,
-    decrypt
+encrypt,
+decrypt
 } from "../wasm/crypto_engine.js";
 
 async function run() {
+await init();
 
-    await init();
+document.querySelector("#app").innerHTML = `
+    <div class="container">
 
-    document.querySelector("#app").innerHTML = `
-        <div class="container">
+        <h1>Secure Share</h1>
 
-            <h1>Secure Share</h1>
+        <div class="card">
 
-            <div class="card">
+            <h2>Encrypt</h2>
 
-                <h2>Encrypt</h2>
+            <textarea
+                id="secret"
+                rows="6"
+                placeholder="Enter secret"
+            ></textarea>
 
-                <label>Secret</label>
+            <input
+                id="encrypt-password"
+                type="password"
+                placeholder="Password"
+            />
 
-                <textarea
-                    id="secret"
-                    rows="6"
-                ></textarea>
+            <button id="encrypt-btn">
+                Encrypt
+            </button>
 
-                <label>Password</label>
+            <button id="copy-payload-btn">
+                Copy Payload
+            </button>
 
-                <input
-                    id="encrypt-password"
-                    type="password"
-                />
+            <button id="copy-link-btn">
+                Copy Share Link
+            </button>
 
-                <button id="encrypt-btn">
-                    Encrypt
-                </button>
-
-                <button id="copy-btn">
-                    Copy Result
-                </button>
-
-                <textarea
-                    id="encrypted-output"
-                    rows="10"
-                    readonly
-                ></textarea>
-
-            </div>
-
-            <div class="card">
-
-                <h2>Decrypt</h2>
-
-                <label>Encrypted Payload</label>
-
-                <textarea
-                    id="encrypted-input"
-                    rows="10"
-                ></textarea>
-
-                <label>Password</label>
-
-                <input
-                    id="decrypt-password"
-                    type="password"
-                />
-
-                <button id="decrypt-btn">
-                    Decrypt
-                </button>
-
-                <textarea
-                    id="decrypted-output"
-                    rows="6"
-                    readonly
-                ></textarea>
-
-            </div>
-
-            <div
-                id="message"
-                class="error"
-            ></div>
+            <textarea
+                id="encrypted-output"
+                rows="10"
+                readonly
+            ></textarea>
 
         </div>
-    `;
 
-    const secret =
-        document.getElementById("secret");
+        <div class="card">
 
-    const encryptPassword =
-        document.getElementById("encrypt-password");
+            <h2>Decrypt</h2>
 
-    const encryptButton =
-        document.getElementById("encrypt-btn");
+            <textarea
+                id="encrypted-input"
+                rows="10"
+                placeholder="Encrypted payload"
+            ></textarea>
 
-    const encryptedOutput =
-        document.getElementById("encrypted-output");
+            <input
+                id="decrypt-password"
+                type="password"
+                placeholder="Password"
+            />
 
-    const encryptedInput =
-        document.getElementById("encrypted-input");
+            <button id="decrypt-btn">
+                Decrypt
+            </button>
 
-    const decryptPassword =
-        document.getElementById("decrypt-password");
+            <textarea
+                id="decrypted-output"
+                rows="6"
+                readonly
+            ></textarea>
 
-    const decryptButton =
-        document.getElementById("decrypt-btn");
+        </div>
 
-    const decryptedOutput =
-        document.getElementById("decrypted-output");
+        <div id="message"></div>
 
-    const copyButton =
-        document.getElementById("copy-btn");
+    </div>
+`;
 
-    const message =
-        document.getElementById("message");
+const secret =
+    document.getElementById("secret");
 
-    encryptButton.addEventListener(
-        "click",
-        () => {
+const encryptPassword =
+    document.getElementById("encrypt-password");
+
+const encryptButton =
+    document.getElementById("encrypt-btn");
+
+const encryptedOutput =
+    document.getElementById("encrypted-output");
+
+const encryptedInput =
+    document.getElementById("encrypted-input");
+
+const decryptPassword =
+    document.getElementById("decrypt-password");
+
+const decryptButton =
+    document.getElementById("decrypt-btn");
+
+const decryptedOutput =
+    document.getElementById("decrypted-output");
+
+const copyPayloadButton =
+    document.getElementById("copy-payload-btn");
+
+const copyLinkButton =
+    document.getElementById("copy-link-btn");
+
+const message =
+    document.getElementById("message");
+
+if (window.location.hash.length > 1) {
+
+    const payload =
+        decodeURIComponent(
+            window.location.hash.substring(1)
+        );
+
+    encryptedInput.value =
+        payload;
+
+    encryptedOutput.value =
+        payload;
+}
+
+encryptButton.addEventListener(
+    "click",
+    () => {
+
+        try {
 
             message.textContent = "";
 
-            try {
-
-                if (
-                    encryptPassword.value.trim() === ""
-                ) {
-                    throw new Error(
-                        "Password is required"
-                    );
-                }
-
-                const result = encrypt(
+            const result =
+                encrypt(
                     secret.value,
                     encryptPassword.value
                 );
 
-                encryptedOutput.value =
-                    result;
-
-            }
-            catch (error) {
-
-                message.textContent =
-                    error.message || error;
-
-            }
+            encryptedOutput.value =
+                result;
 
         }
-    );
+        catch (error) {
 
-    decryptButton.addEventListener(
-        "click",
-        () => {
+            message.textContent =
+                error.message || error;
+
+        }
+
+    }
+);
+
+decryptButton.addEventListener(
+    "click",
+    () => {
+
+        try {
 
             message.textContent = "";
 
-            try {
-
-                if (
-                    decryptPassword.value.trim() === ""
-                ) {
-                    throw new Error(
-                        "Password is required"
-                    );
-                }
-
-                const result = decrypt(
+            const result =
+                decrypt(
                     encryptedInput.value,
                     decryptPassword.value
                 );
 
-                decryptedOutput.value =
-                    result;
-
-            }
-            catch (error) {
-
-                message.textContent =
-                    error.message || error;
-
-            }
+            decryptedOutput.value =
+                result;
 
         }
-    );
+        catch (error) {
 
-    copyButton.addEventListener(
-        "click",
-        async () => {
-
-            try {
-
-                await navigator.clipboard.writeText(
-                    encryptedOutput.value
-                );
-
-                message.className =
-                    "success";
-
-                message.textContent =
-                    "Copied to clipboard";
-
-                setTimeout(() => {
-
-                    message.className =
-                        "error";
-
-                    message.textContent = "";
-
-                }, 2000);
-
-            }
-            catch {
-
-                message.textContent =
-                    "Failed to copy";
-
-            }
+            message.textContent =
+                error.message || error;
 
         }
-    );
+
+    }
+);
+
+copyPayloadButton.addEventListener(
+    "click",
+    async () => {
+
+        await navigator.clipboard.writeText(
+            encryptedOutput.value
+        );
+
+        message.textContent =
+            "Payload copied";
+    }
+);
+
+copyLinkButton.addEventListener(
+    "click",
+    async () => {
+
+        const url =
+            window.location.origin +
+            "/#" +
+            encodeURIComponent(
+                encryptedOutput.value
+            );
+
+        await navigator.clipboard.writeText(
+            url
+        );
+
+        message.textContent =
+            "Share link copied";
+    }
+);
+
 }
 
 run();
